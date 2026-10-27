@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Landscape Remote</title>
+<meta name="description" content="A landscape-first remote control for Spotify, installable from Safari.">
+<meta name="theme-color" content="#121212">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Landscape">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<!-- SVG icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M10.6 9.2 7.9 6.5H4V4.5h4.7l3.3 3.3-1.4 1.4zM19 4.5h-4v2h1.6L13.4 9.7l1.4 1.4 3.2-3.2V9.5h2v-5h-1zm-3.6 8.9-1.4 1.4 3.2 3.2H16v2h4v-5h-2v1.6l-3.2-3.2zm-7.5 4.1H4v2h4.7l3.3-3.3-1.4-1.4-2.7 2.7z"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></symbol>
+  <symbol id="i-repeat-one" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></symbol>
+  <symbol id="i-heart-o" viewBox="0 0 24 24"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"/></symbol>
+  <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M17 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-5 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 16a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M17 1H7a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm0 18H7V5h10v14z"/></symbol>
+  <symbol id="i-computer" viewBox="0 0 24 24"><path d="M20 18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></symbol>
+  <symbol id="i-volume" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></symbol>
+</svg>
+
+<!-- First-run setup -->
+<div id="setup" class="screen hidden">
+  <div class="card">
+    <h1>Landscape Remote</h1>
+    <p class="muted">A landscape-first remote for Spotify. It controls whatever device is playing (this phone's Spotify app, a Mac, a speaker). Spotify Premium is required for playback control.</p>
+    <ol class="steps">
+      <li>Go to <strong>developer.spotify.com/dashboard</strong> and create an app. Tick <strong>Web API</strong>.</li>
+      <li>Add this exact Redirect URI:
+        <div class="copy-row"><code id="redirect-uri"></code><button id="btn-copy" class="btn small">Copy</button></div>
+      </li>
+      <li>Paste the app's <strong>Client ID</strong> below.</li>
+    </ol>
+    <label class="field">
+      <span>Client ID</span>
+      <input id="client-id" type="text" inputmode="latin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="32 hex characters">
+    </label>
+    <button id="btn-connect" class="btn primary">Connect Spotify</button>
+    <p id="install-tip" class="tip hidden">Tip: in Safari tap <strong>Share → Add to Home Screen</strong>, then open the app from the Home Screen and log in there. Logins done in Safari don't carry over to the Home Screen app.</p>
+  </div>
+</div>
+
+<!-- Main player -->
+<div id="app" class="screen hidden">
+  <section class="now">
+    <div class="art-wrap">
+      <img id="art" alt="" draggable="false">
+      <div id="art-placeholder" class="art-placeholder"><svg><use href="#i-note"/></svg></div>
+    </div>
+    <div class="meta">
+      <div id="title" class="title">Nothing playing</div>
+      <div id="artist" class="artist">Start playback in Spotify on any device</div>
+    </div>
+    <div class="progress">
+      <span id="elapsed" class="time">0:00</span>
+      <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek">
+      <span id="duration" class="time">0:00</span>
+    </div>
+    <div class="controls">
+      <button id="btn-shuffle" class="icon-btn small toggle" aria-label="Shuffle"><svg><use href="#i-shuffle"/></svg></button>
+      <button id="btn-prev" class="icon-btn" aria-label="Previous"><svg><use href="#i-prev"/></svg></button>
+      <button id="btn-play" class="icon-btn play" aria-label="Play or pause"><svg><use id="play-icon" href="#i-play"/></svg></button>
+      <button id="btn-next" class="icon-btn" aria-label="Next"><svg><use href="#i-next"/></svg></button>
+      <button id="btn-repeat" class="icon-btn small toggle" aria-label="Repeat"><svg><use id="repeat-icon" href="#i-repeat"/></svg></button>
+    </div>
+    <div class="secondary">
+      <button id="btn-like" class="icon-btn small toggle" aria-label="Save to Liked Songs"><svg><use id="like-icon" href="#i-heart-o"/></svg></button>
+      <button id="btn-device" class="chip"><svg><use href="#i-speaker"/></svg><span id="device-name">No device</span></button>
+      <div class="volume">
+        <svg><use href="#i-volume"/></svg>
+        <input id="volume" type="range" min="0" max="100" value="50" aria-label="Volume">
+      </div>
+      <button id="btn-settings" class="icon-btn small" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
+    </div>
+  </section>
+
+  <section class="side">
+    <nav class="tabs">
+      <button class="tab active" data-tab="playlists">Playlists</button>
+      <button class="tab" data-tab="search">Search</button>
+      <button class="tab" data-tab="queue">Queue</button>
+      <button class="tab" data-tab="devices">Devices</button>
+    </nav>
+    <div id="panel-playlists" class="panel">
+      <div id="playlists-list" class="list"><div class="empty">Loading…</div></div>
+    </div>
+    <div id="panel-tracks" class="panel hidden">
+      <header class="panel-head">
+        <button id="btn-back" class="icon-btn small" aria-label="Back"><svg><use href="#i-back"/></svg></button>
+        <div id="tracks-title" class="panel-title"></div>
+        <button id="btn-play-ctx" class="btn small primary">Play</button>
+        <button id="btn-shuffle-ctx" class="btn small">Shuffle</button>
+      </header>
+      <div id="tracks-list" class="list"></div>
+    </div>
+    <div id="panel-search" class="panel hidden">
+      <input id="search-input" type="search" placeholder="Songs, albums, artists, playlists" autocomplete="off" autocorrect="off" autocapitalize="off">
+      <div id="search-results" class="list"></div>
+    </div>
+    <div id="panel-queue" class="panel hidden">
+      <div id="queue-list" class="list"></div>
+    </div>
+    <div id="panel-devices" class="panel hidden">
+      <div id="devices-list" class="list"></div>
+    </div>
+  </section>
+</div>
+
+<!-- Settings sheet -->
+<div id="settings" class="overlay hidden">
+  <div class="sheet">
+    <h2>Settings</h2>
+    <div class="kv"><span>Redirect URI</span><code id="settings-redirect"></code></div>
+    <div class="kv"><span>Client ID</span><code id="settings-client"></code></div>
+    <label class="switch"><input id="wake-toggle" type="checkbox"><span>Keep screen awake while open</span></label>
+    <div class="sheet-actions">
+      <button id="btn-reload" class="btn">Reload app</button>
+      <button id="btn-change-id" class="btn">Change Client ID</button>
+      <button id="btn-logout" class="btn danger">Log out</button>
+    </div>
+    <button id="btn-close-settings" class="btn primary">Done</button>
+  </div>
+</div>
+
+<div id="rotate-hint" class="rotate-hint">Rotate your phone for the landscape layout</div>
+<div id="toast" class="toast hidden"></div>
+
+<script src="./app.js"></script>
+</body>
+</html>
