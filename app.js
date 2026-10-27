@@ -364,6 +364,7 @@ async function toggleLiked() {
   try {
     await api(liked ? 'DELETE' : 'PUT', '/me/tracks', { query: { ids: id } });
     toast(liked ? 'Removed from Liked Songs' : 'Added to Liked Songs', 1400);
+    cache.tracks.delete(LIKED_ID);
   } catch (e) { likedCache.set(id, liked); renderLiked(); handleError(e); }
 }
 
@@ -417,18 +418,20 @@ async function transferTo(deviceId) {
   loadDevices();
 }
 /** Start playback. body = {context_uri, offset} or {uris}. Falls back to the first known device if none is active. */
-async function play(body) {
+async function play(body, { rethrow = false } = {}) {
   cmdAt = Date.now();
   try {
     await api('PUT', '/me/player/play', { body });
   } catch (e) {
+    if (rethrow && e.status !== 404) { cmdAt = Date.now(); throw e; }
     if (e.status === 404) {
       try {
         const d = await api('GET', '/me/player/devices');
         const devices = d?.devices || [];
         const target = devices.find((x) => x.is_active) || devices[0];
         if (target) {
-          await api('PUT', '/me/player/play', { query: { device_id: target.id }, body });
+          try { await api('PUT', '/me/player/play', { query: { device_id: target.id }, body }); }
+          catch (e3) { if (rethrow) { cmdAt = Date.now(); throw e3; } handleError(e3); }
           toast(`Playing on ${target.name}`, 1600);
         } else {
           toast('No Spotify device found. Open the Spotify app first.');
@@ -493,16 +496,19 @@ async function loadPlaylists(force = false) {
     handleError(e);
   }
 }
+const LIKED_ID = '__liked';
 function renderPlaylists() {
   const items = cache.playlists || [];
-  if (!items.length) { ui.playlistsList.innerHTML = '<div class="empty">No playlists yet</div>'; return; }
-  ui.playlistsList.innerHTML = items.map((p) => rowHtml({
+  const likedRow = rowHtml({ uri: '', name: 'Liked Songs', sub: 'Your saved tracks', iconFallback: '#i-heart', extra: ' playlist liked' })
+    .replace('<button class="row', `<button data-id="${LIKED_ID}" class="row`);
+  ui.playlistsList.innerHTML = likedRow + items.map((p) => rowHtml({
     uri: '', img: smallImg(p.images), name: p.name,
     sub: [p.owner?.display_name, p.tracks?.total != null ? `${p.tracks.total} tracks` : null].filter(Boolean).join(' · '),
     extra: ` playlist`,
   }).replace('<button class="row', `<button data-id="${esc(p.id)}" class="row`)).join('');
   $$('.row.playlist', ui.playlistsList).forEach((el) => {
     el.addEventListener('click', () => {
+      if (el.dataset.id === LIKED_ID) { openLiked(); return; }
       const p = items.find((x) => x.id === el.dataset.id);
       if (p) openPlaylist(p);
     });
@@ -525,6 +531,54 @@ async function openPlaylist(p) {
     ui.tracksList.innerHTML = '<div class="empty">Could not load tracks</div>';
     handleError(e);
   }
+}
+let userId = null;
+async function openLiked() {
+  ui.tracksTitle.textContent = 'Liked Songs';
+  ui.panelPlaylists.classList.add('hidden');
+  ui.panelTracks.classList.remove('hidden');
+  ui.panelTracks.scrollTop = 0;
+  openContext = { uri: null, name: 'Liked Songs', id: LIKED_ID, liked: true };
+  const cached = cache.tracks.get(LIKED_ID);
+  if (cached) { openContext.uri = userId ? `spotify:user:${userId}:collection` : null; renderTracks(cached); return; }
+  ui.tracksList.innerHTML = '<div class="empty">Loading…</div>';
+  try {
+    if (!userId) userId = (await api('GET', '/me'))?.id || null;
+    const tracks = await fetchLikedTracks(200);
+    cache.tracks.set(LIKED_ID, tracks);
+    if (openContext?.id === LIKED_ID) {
+      openContext.uri = userId ? `spotify:user:${userId}:collection` : null;
+      renderTracks(tracks);
+    }
+  } catch (e) {
+    ui.tracksList.innerHTML = '<div class="empty">Could not load Liked Songs</div>';
+    handleError(e);
+  }
+}
+async function fetchLikedTracks(max) {
+  const out = [];
+  let d = await api('GET', '/me/tracks', { query: { limit: 50 } });
+  for (;;) {
+    for (const it of d?.items || []) { const t = it?.track || it?.item; if (t) { out.push(t); if (t.id) likedCache.set(t.id, true); } }
+    if (!d?.next || out.length >= max) break;
+    d = await api('GET', d.next.replace(API, ''));
+  }
+  out.more = !!d?.next;
+  return out;
+}
+/** Play from the open context at a position (-1 = from the start). Liked Songs falls back to explicit URIs if the collection URI is rejected. */
+async function playFromContext(pos) {
+  const ctx = openContext;
+  if (!ctx) return;
+  const body = (uri) => (pos >= 0 ? { context_uri: uri, offset: { position: pos } } : { context_uri: uri });
+  if (!ctx.liked) return play(body(ctx.uri));
+  const tracks = cache.tracks.get(LIKED_ID) || [];
+  if (ctx.uri) {
+    try { await play(body(ctx.uri), { rethrow: true }); return; } catch (e) { console.warn('collection context rejected, falling back to uris', e); }
+  }
+  const start = Math.max(0, pos);
+  const uris = tracks.slice(start, start + 50).filter((t) => t.uri && !t.is_local).map((t) => t.uri);
+  if (uris.length) await play({ uris }); else toast('Nothing to play');
 }
 async function fetchPlaylistTracks(id, max) {
   const out = [];
@@ -549,7 +603,7 @@ function renderTracks(tracks) {
     right: fmt(t.duration_ms), disabled: !!t.is_local || !t.uri,
   }).replace('<button class="row', `<button data-pos="${i}" class="row`)).join('') + (tracks.more ? '<div class="empty">Showing the first 200 tracks</div>' : '');
   $$('.row[data-uri]', ui.tracksList).forEach((el) => {
-    el.addEventListener('click', () => play({ context_uri: openContext.uri, offset: { position: parseInt(el.dataset.pos, 10) } }));
+    el.addEventListener('click', () => playFromContext(parseInt(el.dataset.pos, 10)));
   });
   highlightCurrent(player?.item?.uri);
 }
@@ -715,14 +769,14 @@ function bindEvents() {
 
   $$('.tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
   ui.btnBack.addEventListener('click', closePlaylist);
-  ui.btnPlayCtx.addEventListener('click', () => openContext && play({ context_uri: openContext.uri }));
+  ui.btnPlayCtx.addEventListener('click', () => playFromContext(-1));
   ui.btnShuffleCtx.addEventListener('click', async () => {
     if (!openContext) return;
     const tracks = cache.tracks.get(openContext.id) || [];
     const playable = tracks.filter((t) => t.uri && !t.is_local);
     const pos = playable.length ? tracks.indexOf(playable[Math.floor(Math.random() * playable.length)]) : -1;
     try { await api('PUT', '/me/player/shuffle', { query: { state: true } }); } catch { /* applied after play below */ }
-    await play(pos >= 0 ? { context_uri: openContext.uri, offset: { position: pos } } : { context_uri: openContext.uri });
+    await playFromContext(pos);
     api('PUT', '/me/player/shuffle', { query: { state: true } }).catch(() => {});
   });
   ui.searchInput.addEventListener('input', onSearchInput);
